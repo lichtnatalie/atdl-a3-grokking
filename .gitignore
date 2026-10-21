@@ -1,0 +1,22 @@
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+
+# LaTeX build files
+report/*.aux
+report/*.bbl
+report/*.blg
+report/*.log
+report/*.fls
+report/*.fdb_latexmk
+report/*.out
+report/build.log
+
+# macOS
+.DS_Store
+
+# Report source and PDF are kept locally, not published
+report/
+
+# sweep log
+results/sweep_log.txt
