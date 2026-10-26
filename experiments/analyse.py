@@ -253,16 +253,16 @@ def fig_examples(data, n=35):
     fig, axes = plt.subplots(1, 2, figsize=(FULL, 1.9), sharey=True)
     for ax, r, title in zip(axes, pick, ["(a) reaches RQI > 0.95", "(b) does not"]):
         d = trace("released", r)
-        ax.plot(d["step"], d["acc_train"], color=INK2, lw=1.2, ls="--")
-        ax.plot(d["step"], d["rqi"], color=SUCCESS if r["ok"] else FAILURE)
+        # RQI first, training accuracy on top, so the dashed line stays visible at 1.0
+        ax.plot(d["step"], d["rqi"], color=SUCCESS if r["ok"] else FAILURE, lw=2.0,
+                label="RQI", zorder=2)
+        ax.plot(d["step"], d["acc_train"], color=INK, lw=1.2, ls=(0, (4, 2)),
+                label="training accuracy", zorder=3)
         t90 = r["iter_train90"]
-        ax.axvline(t90, color=INK2, lw=0.8, ls=":")
-        ax.text(t90 + 150, 0.04, "90% train acc.", color=INK2, fontsize=7)
-        same = abs(d["acc_train"][-1] - d["rqi"][-1]) < 0.1
-        ax.text(9800, d["acc_train"][-1] - (0.2 if same else 0.09), "train accuracy (dashed)",
-                color=INK2, fontsize=7, ha="right")
-        ax.text(9800, d["rqi"][-1] + (-0.1 if same else 0.04), "RQI (solid)", color=INK,
-                fontsize=7, ha="right")
+        ax.axvline(t90, color=INK2, lw=0.8, ls=":", zorder=1)
+        ax.text(t90 + 150, 0.04, "90% training accuracy", color=INK2, fontsize=7)
+        ax.legend(loc="center right", bbox_to_anchor=(1.0, 0.76), frameon=True,
+                  framealpha=0.9, edgecolor=GRID)
         ax.set_title(f"{title}: training set {n}/55, seed {int(r['seed'])}", loc="left")
         ax.set_xlabel("training step")
         ax.set_xlim(0, 10000)
@@ -319,15 +319,15 @@ def fig_movement(data, tag="released"):
         path.append(b)
     net, path = np.array(net), np.array(path)
     fig, ax = plt.subplots(figsize=(COL, 2.0))
-    ax.plot(offs, np.nanmedian(path, 0), color=FAILURE, ls="--", lw=1.2)
-    ax.plot(offs, np.nanmedian(net, 0), color=FAILURE)
-    ax.axvline(0, color=INK2, lw=0.8, ls=":")
+    ax.plot(offs, np.nanmedian(path, 0), color=FAILURE, ls=(0, (4, 2)), lw=1.2,
+            label="path length (sum of all steps)")
+    ax.plot(offs, np.nanmedian(net, 0), color=FAILURE,
+            label="net displacement (start to end)")
+    ax.axvline(0, color=INK2, lw=0.8, ls=":", label="90% training accuracy reached")
     ax.set_yscale("log")
     ax.set_xlabel("steps relative to 90% training accuracy")
     ax.set_ylabel("distance per 500 steps")
-    ax.text(4900, np.nanmedian(path, 0)[-1] * 1.4, "path length", ha="right", fontsize=7)
-    ax.text(2300, np.nanmedian(net, 0)[np.searchsorted(offs, 2300)] * 0.55,
-            "net displacement", ha="right", fontsize=7)
+    ax.legend(loc="upper right", frameon=True, framealpha=0.9, edgecolor=GRID)
     ax.set_title(f"runs that do not reach RQI > 0.95 (released, median of {len(net)})",
                  loc="left")
     save(fig, "fig_movement")
