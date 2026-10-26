@@ -1,0 +1,6 @@
+setting,successes,runs,seeds_better,seeds_worse,seeds_tied,sign_test_p
+decoder lr 1e-3,15,138,0,20,0,1.9073486328125e-06
+"released (emb 1e-3, dec 1e-4)",70,138,0,0,20,nan
+embedding lr 3e-3,90,138,12,0,8,0.00048828125
+embedding lr 1e-2,94,138,13,2,5,0.00738525390625
+decoder lr 1e-5,96,138,14,2,4,0.004180908203125

@@ -1,0 +1,38 @@
+Runs per setting: 220 (11 sizes x 20 seeds); lambda_3 > 0: 138
+  decoder lr 1e-3: lambda_3 = 0 runs reaching RQI > 0.95: 0/82
+  released (emb 1e-3, dec 1e-4): lambda_3 = 0 runs reaching RQI > 0.95: 0/82
+  embedding lr 3e-3: lambda_3 = 0 runs reaching RQI > 0.95: 0/82
+  embedding lr 1e-2: lambda_3 = 0 runs reaching RQI > 0.95: 0/82
+  decoder lr 1e-5: lambda_3 = 0 runs reaching RQI > 0.95: 0/82
+
+1. Successes (RQI > 0.95 within 10^4 steps) and seed-level sign test vs released
+  decoder lr 1e-3                   15/138  seeds better/worse/tied 0/20/0  p = 1.9e-06
+  released (emb 1e-3, dec 1e-4)     70/138  seeds better/worse/tied 0/0/20  p = nan
+  embedding lr 3e-3                 90/138  seeds better/worse/tied 12/0/8  p = 0.00049
+  embedding lr 1e-2                 94/138  seeds better/worse/tied 13/2/5  p = 0.0074
+  decoder lr 1e-5                   96/138  seeds better/worse/tied 14/2/4  p = 0.0042
+  embedding lr 1e-2 vs 3e-3: seeds better/worse 7/4, p = 0.55
+
+2. RQI at the step of 90% training accuracy ('the fit'), lambda_3 > 0 runs
+  decoder lr 1e-3: fit reached 138/138; median RQI at fit success 1.00 / failure 0.19; AUC 1.000 (100% threshold: 1.000); successes formed after fit 0/15; median lead 204 steps; failures: median RQI change after fit +0.000; no fit in 10^4 steps 0 (of which success 0)
+  released (emb 1e-3, dec 1e-4): fit reached 137/138; median RQI at fit success 1.00 / failure 0.19; AUC 1.000 (100% threshold: 1.000); successes formed after fit 1/70; median lead 1185 steps; failures: median RQI change after fit +0.000; no fit in 10^4 steps 1 (of which success 0)
+      formed after fit: n=25 seed=2, RQI at fit 0.83, fit at 1312, 100% acc at 1880, RQI > 0.95 at 2553
+  embedding lr 3e-3: fit reached 138/138; median RQI at fit success 1.00 / failure 0.23; AUC 1.000 (100% threshold: 0.999); successes formed after fit 2/90; median lead 1054 steps; failures: median RQI change after fit +0.000; no fit in 10^4 steps 0 (of which success 0)
+      formed after fit: n=25 seed=2, RQI at fit 0.79, fit at 1103, 100% acc at 2489, RQI > 0.95 at 3044
+      formed after fit: n=30 seed=15, RQI at fit 0.64, fit at 1325, 100% acc at 2115, RQI > 0.95 at 1948
+  embedding lr 1e-2: fit reached 138/138; median RQI at fit success 1.00 / failure 0.23; AUC 1.000 (100% threshold: 1.000); successes formed after fit 1/94; median lead 1417 steps; failures: median RQI change after fit +0.000; no fit in 10^4 steps 0 (of which success 0)
+      formed after fit: n=30 seed=15, RQI at fit 0.66, fit at 1236, 100% acc at 2480, RQI > 0.95 at 2143
+  decoder lr 1e-5: fit reached 15/138; median RQI at fit success 1.00 / failure 0.45; AUC 0.981 (100% threshold: nan); successes formed after fit 0/96; median lead 6350 steps; failures: median RQI change after fit +0.000; no fit in 10^4 steps 123 (of which success 87)
+  released: median RQI at step 9 (initialisation) 0.029
+
+3. Movement of the normalised embeddings, failures (fit between steps 1,000 and 7,000)
+  released (emb 1e-3, dec 1e-4): n=66; last 1,000 steps vs 1,000 steps before the fit: net displacement x0.003, path length x0.18, embedding gradient norm x0.14
+  decoder lr 1e-3: n=26; last 1,000 steps vs 1,000 steps before the fit: net displacement x0.004, path length x0.11, embedding gradient norm x0.05
+  embedding lr 3e-3: n=46; last 1,000 steps vs 1,000 steps before the fit: net displacement x0.003, path length x0.17, embedding gradient norm x0.82
+  embedding lr 1e-2: n=44; last 1,000 steps vs 1,000 steps before the fit: net displacement x0.006, path length x0.16, embedding gradient norm x2.34
+
+3b. When does the RQI of a failed run settle (stay within 0.05 of its final value)?
+  released (emb 1e-3, dec 1e-4): 67 failures; settles -881 steps relative to the fit (median; IQR -1510 to +70); before the fit in 72%; training accuracy then 0.64
+  decoder lr 1e-3: 123 failures; settles -216 steps relative to the fit (median; IQR -474 to -86); before the fit in 80%; training accuracy then 0.56
+  embedding lr 3e-3: 48 failures; settles -342 steps relative to the fit (median; IQR -1095 to +333); before the fit in 65%; training accuracy then 0.75
+  embedding lr 1e-2: 44 failures; settles -332 steps relative to the fit (median; IQR -1359 to +1351); before the fit in 57%; training accuracy then 0.87

@@ -22,7 +22,7 @@ regression toy model (addition, p = 10) without weight decay:
 
 **Definitions.**
 - "The decoder fits the training set" is the first step with **90% training
-  accuracy**, the papers own threshold (Sec. 4.1). 100% is kept as a robustness check.
+  accuracy**, the paper's own threshold (Sec. 4.1). 100% is kept as a robustness check.
 - "The representation has formed" is the first step with **RQI > 0.95**.
 - Runs that never reach an event within 10^4 steps are treated as right-censored.
 
@@ -36,6 +36,9 @@ experiments/check_exact.py   (1) the recording does not change training (exact e
                              (2) the released setting reproduces earlier runs
 experiments/run_sweep.py     one configuration: 11 training set sizes x 20 seeds, resumable
 experiments/run_all.sh       all configurations
+experiments/analyse.py       every number and figure in the report (seed-level sign tests)
+results/analysis/            summary.txt (all quoted numbers) and per-setting tables
+figures/                     report figures (PDF and PNG)
 results/<tag>/runs.csv       one row per run; results/<tag>/traces/*.npz: curves every 10 steps
 results/a2_reference/        reference runs of the released setting, used by check_exact.py
 third_party/grokking-squared/  authors' code, unmodified (MIT), pinned at 0229df9 (2022-11-25)
@@ -61,4 +64,5 @@ nested training sets across sizes, so statistical tests use the **seed** as the 
 pip install -r requirements.txt
 python experiments/check_exact.py      # ~3 min
 experiments/run_all.sh                 # ~55 min per configuration on 2 CPU cores
+python experiments/analyse.py          # ~1 min
 ```
