@@ -33,11 +33,11 @@ FIG = os.path.join(ROOT, "figures")
 
 # setting tag -> label used in the report
 SETTINGS = {
-    "dec_lr_1e-3": "decoder lr $10^{-3}$",
-    "released": "released",
-    "emb_lr_3e-3": "embedding lr $3{\\cdot}10^{-3}$",
-    "emb_lr_1e-2": "embedding lr $10^{-2}$",
-    "dec_lr_1e-5": "decoder lr $10^{-5}$",
+    "dec_lr_1e-3": "decoder\n$10^{-3}$",
+    "released": "released\n",
+    "emb_lr_3e-3": "embedding\n$3{\\cdot}10^{-3}$",
+    "emb_lr_1e-2": "embedding\n$10^{-2}$",
+    "dec_lr_1e-5": "decoder\n$10^{-5}$",
 }
 PLAIN = {"dec_lr_1e-3": "decoder lr 1e-3", "released": "released (emb 1e-3, dec 1e-4)",
          "emb_lr_3e-3": "embedding lr 3e-3", "emb_lr_1e-2": "embedding lr 1e-2",
@@ -275,7 +275,7 @@ def fig_race(data):
     """RQI at the fit, every lambda_3 > 0 run, by setting and outcome."""
     tags = ["dec_lr_1e-3", "released", "emb_lr_3e-3", "emb_lr_1e-2"]
     rng = np.random.default_rng(0)
-    fig, ax = plt.subplots(figsize=(COL, 2.2))
+    fig, ax = plt.subplots(figsize=(COL, 2.5))
     for k, t in enumerate(tags):
         for ok, dx, col in [(True, 0.17, SUCCESS), (False, -0.17, FAILURE)]:
             y = [r["rqi_at_train90"] for r in data[t] if r["fit"] and r["ok"] == ok]
@@ -284,11 +284,14 @@ def fig_race(data):
                        label=("reaches RQI > 0.95" if ok else "does not") if k == 0 else None)
     ax.axhline(0.95, color=INK2, lw=0.8, ls=":")
     ax.set_xticks(range(len(tags)))
-    ax.set_xticklabels([SETTINGS[t] for t in tags], rotation=15, ha="right")
+    ax.set_xticklabels([SETTINGS[t] for t in tags])
+    ax.set_xlabel("setting (learning rate that is changed)")
+    ax.tick_params(axis="x", labelsize=6.3)
     ax.set_ylabel("RQI at 90% training accuracy")
     ax.set_ylim(-0.02, 1.05)
     ax.grid(axis="x", visible=False)
-    ax.legend(loc="center left", bbox_to_anchor=(1.0, 0.5), frameon=False)
+    ax.legend(loc="lower center", bbox_to_anchor=(0.5, 1.0), ncol=2, frameon=False,
+              markerscale=1.5, handletextpad=0.2)
     save(fig, "fig_race")
 
 
@@ -349,7 +352,9 @@ def fig_settings(data):
         ax.text(k, 1.07, f"{sum(r['ok'] for r in rows)}/{len(rows)}",
                 ha="center", fontsize=7)
     ax.set_xticks(range(len(tags)))
-    ax.set_xticklabels([SETTINGS[t] for t in tags], rotation=15, ha="right")
+    ax.set_xticklabels([SETTINGS[t] for t in tags])
+    ax.set_xlabel("setting (learning rate that is changed)")
+    ax.tick_params(axis="x", labelsize=6.3)
     ax.set_ylabel("fraction reaching RQI > 0.95")
     ax.set_ylim(0, 1.15)
     ax.set_yticks([0, 0.25, 0.5, 0.75, 1.0])
