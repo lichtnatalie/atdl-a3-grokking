@@ -61,7 +61,7 @@ nested training sets across sizes, so statistical tests use the **seed** as the 
 ## Reproduce
 
 ```bash
-pip install -r requirements.txt
+pip install -r requirements.txt        # pinned versions, Python 3.13
 python experiments/check_exact.py      # ~3 min
 experiments/run_all.sh                 # ~55 min per configuration on 2 CPU cores
 python experiments/analyse.py          # ~1 min
