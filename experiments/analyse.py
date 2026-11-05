@@ -168,6 +168,29 @@ def main():
     r0 = [trace("released", r)["rqi"][0] for r in data["released"]]
     say(f"  released: median RQI at step 9 (initialisation) {np.median(r0):.3f}")
 
+    say("\n2b. Overlap: successful runs with RQI at the fit at or below the highest failed run")
+    for t, rows in data.items():
+        for thr in ("90", "100"):
+            fit = [r for r in rows if r[f"reached_train{thr}"] == 1]
+            S = [r for r in fit if r["ok"]]
+            F = [r[f"rqi_at_train{thr}"] for r in fit if not r["ok"]]
+            if not S or not F:
+                continue
+            mf = max(F)
+            low = [r for r in S if r[f"rqi_at_train{thr}"] <= mf]
+            pairs = sum(1 for r in S for f in F if r[f"rqi_at_train{thr}"] < f)
+            say(f"  {PLAIN[t]}, {thr}% threshold: {len(S)} successes, {len(F)} failures, highest "
+                f"failure {mf:.3f}; successes at or below it: {len(low)} "
+                + str([(int(r['n_train']), int(r['seed']), round(r[f'rqi_at_train{thr}'], 3))
+                       for r in low])
+                + f"; out-of-order pairs {pairs}")
+
+    say("\n2c. Successful runs whose RQI is below 0.95 at the end of training")
+    for t, rows in data.items():
+        low = [r for r in rows if r["ok"] and r["final_rqi"] < 0.95]
+        say(f"  {PLAIN[t]}: {len(low)} of {sum(r['ok'] for r in rows)} "
+            + str([(int(r['n_train']), int(r['seed']), round(r['final_rqi'], 3)) for r in low]))
+
     # ---------------- 3. H1: movement after the fit ----------------
     say("\n3. Movement of the normalised embeddings, failures (fit between steps 1,000 and 7,000)")
     tab = []
@@ -198,6 +221,29 @@ def main():
         say(f"  {PLAIN[t]}: {len(rel)} failures; settles {np.median(rel):+.0f} steps relative to "
             f"the fit (median; IQR {np.percentile(rel, 25):+.0f} to {np.percentile(rel, 75):+.0f}); "
             f"before the fit in {np.mean(rel <= 0):.0%}; training accuracy then {np.median(acc):.2f}")
+
+    # ---------------- 4. Held-out (test) accuracy ----------------
+    say("\n4. Test accuracy on the held-out pairs (ideal = best possible given the training set)")
+    for t, rows in data.items():
+        for ok, lab in [(True, "successes"), (False, "failures")]:
+            g = [r for r in rows if r["ok"] == ok]
+            if not g:
+                continue
+            fin, ideal, late, small_test = [], [], [], []
+            for r in g:
+                d = trace(t, r)
+                te, st = d["acc_test"], d["step"]
+                gain = te[-1] - te[np.searchsorted(st, 5000)]
+                fin.append(te[-1])
+                ideal.append(r["ideal_test_acc"])
+                late.append(gain)
+                if gain > 0.2:
+                    small_test.append(55 - int(r["n_train"]))
+            fin, ideal, late = map(np.array, (fin, ideal, late))
+            say(f"  {PLAIN[t]}, {lab} (n={len(g)}): final test accuracy median {np.median(fin):.2f} "
+                f"(ideal {np.median(ideal):.2f}); gain from step 5,000 to the end: median "
+                f"{np.median(late):+.2f}, max {late.max():+.2f}; runs gaining > 0.2: {len(small_test)}"
+                + (f" (test-set sizes {sorted(set(small_test))})" if small_test else ""))
 
     open(os.path.join(OUT, "summary.txt"), "w").write("\n".join(lines) + "\n")
 

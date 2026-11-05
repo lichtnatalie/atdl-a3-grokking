@@ -25,6 +25,24 @@ Runs per setting: 220 (11 sizes x 20 seeds); lambda_3 > 0: 138
   decoder lr 1e-5: fit reached 15/138; median RQI at fit success 1.00 / failure 0.45; AUC 0.981 (100% threshold: nan); successes formed after fit 0/96; median lead 6350 steps; failures: median RQI change after fit +0.000; no fit in 10^4 steps 123 (of which success 87)
   released: median RQI at step 9 (initialisation) 0.029
 
+2b. Overlap: successful runs with RQI at the fit at or below the highest failed run
+  decoder lr 1e-3, 90% threshold: 15 successes, 123 failures, highest failure 0.600; successes at or below it: 0 []; out-of-order pairs 0
+  decoder lr 1e-3, 100% threshold: 15 successes, 123 failures, highest failure 0.600; successes at or below it: 0 []; out-of-order pairs 0
+  released (emb 1e-3, dec 1e-4), 90% threshold: 70 successes, 67 failures, highest failure 0.714; successes at or below it: 0 []; out-of-order pairs 0
+  released (emb 1e-3, dec 1e-4), 100% threshold: 70 successes, 67 failures, highest failure 0.714; successes at or below it: 0 []; out-of-order pairs 0
+  embedding lr 3e-3, 90% threshold: 90 successes, 48 failures, highest failure 0.714; successes at or below it: 1 [(30, 15, 0.643)]; out-of-order pairs 2
+  embedding lr 3e-3, 100% threshold: 87 successes, 48 failures, highest failure 0.714; successes at or below it: 2 [(25, 2, 0.6), (35, 18, 0.686)]; out-of-order pairs 6
+  embedding lr 1e-2, 90% threshold: 94 successes, 44 failures, highest failure 0.714; successes at or below it: 1 [(30, 15, 0.657)]; out-of-order pairs 2
+  embedding lr 1e-2, 100% threshold: 83 successes, 44 failures, highest failure 0.714; successes at or below it: 0 []; out-of-order pairs 0
+  decoder lr 1e-5, 90% threshold: 9 successes, 6 failures, highest failure 0.871; successes at or below it: 1 [(25, 2, 0.614)]; out-of-order pairs 1
+
+2c. Successful runs whose RQI is below 0.95 at the end of training
+  decoder lr 1e-3: 0 of 15 []
+  released (emb 1e-3, dec 1e-4): 0 of 70 []
+  embedding lr 3e-3: 1 of 90 [(54, 19, 0.914)]
+  embedding lr 1e-2: 2 of 94 [(50, 2, 0.9), (50, 19, 0.943)]
+  decoder lr 1e-5: 6 of 96 [(25, 2, 0.6), (35, 4, 0.857), (25, 7, 0.814), (30, 7, 0.886), (35, 8, 0.886), (35, 13, 0.9)]
+
 3. Movement of the normalised embeddings, failures (fit between steps 1,000 and 7,000)
   released (emb 1e-3, dec 1e-4): n=66; last 1,000 steps vs 1,000 steps before the fit: net displacement x0.003, path length x0.18, embedding gradient norm x0.14
   decoder lr 1e-3: n=26; last 1,000 steps vs 1,000 steps before the fit: net displacement x0.004, path length x0.11, embedding gradient norm x0.05
@@ -36,3 +54,15 @@ Runs per setting: 220 (11 sizes x 20 seeds); lambda_3 > 0: 138
   decoder lr 1e-3: 123 failures; settles -216 steps relative to the fit (median; IQR -474 to -86); before the fit in 80%; training accuracy then 0.56
   embedding lr 3e-3: 48 failures; settles -342 steps relative to the fit (median; IQR -1095 to +333); before the fit in 65%; training accuracy then 0.75
   embedding lr 1e-2: 44 failures; settles -332 steps relative to the fit (median; IQR -1359 to +1351); before the fit in 57%; training accuracy then 0.87
+
+4. Test accuracy on the held-out pairs (ideal = best possible given the training set)
+  decoder lr 1e-3, successes (n=15): final test accuracy median 1.00 (ideal 1.00); gain from step 5,000 to the end: median +0.00, max +0.00; runs gaining > 0.2: 0
+  decoder lr 1e-3, failures (n=123): final test accuracy median 0.13 (ideal 0.85); gain from step 5,000 to the end: median +0.00, max +0.05; runs gaining > 0.2: 0
+  released (emb 1e-3, dec 1e-4), successes (n=70): final test accuracy median 1.00 (ideal 1.00); gain from step 5,000 to the end: median +0.00, max +1.00; runs gaining > 0.2: 1 (test-set sizes [1])
+  released (emb 1e-3, dec 1e-4), failures (n=68): final test accuracy median 0.13 (ideal 0.84); gain from step 5,000 to the end: median +0.00, max +0.07; runs gaining > 0.2: 0
+  embedding lr 3e-3, successes (n=90): final test accuracy median 1.00 (ideal 1.00); gain from step 5,000 to the end: median +0.00, max +1.00; runs gaining > 0.2: 3 (test-set sizes [1, 5])
+  embedding lr 3e-3, failures (n=48): final test accuracy median 0.12 (ideal 0.80); gain from step 5,000 to the end: median +0.00, max +0.05; runs gaining > 0.2: 0
+  embedding lr 1e-2, successes (n=94): final test accuracy median 1.00 (ideal 1.00); gain from step 5,000 to the end: median +0.00, max +1.00; runs gaining > 0.2: 5 (test-set sizes [1, 5])
+  embedding lr 1e-2, failures (n=44): final test accuracy median 0.12 (ideal 0.78); gain from step 5,000 to the end: median +0.00, max +0.08; runs gaining > 0.2: 0
+  decoder lr 1e-5, successes (n=96): final test accuracy median 0.60 (ideal 1.00); gain from step 5,000 to the end: median +0.20, max +1.00; runs gaining > 0.2: 46 (test-set sizes [1, 5, 10, 15, 20, 25, 30])
+  decoder lr 1e-5, failures (n=42): final test accuracy median 0.14 (ideal 0.80); gain from step 5,000 to the end: median +0.07, max +0.35; runs gaining > 0.2: 7 (test-set sizes [20, 25, 30])
