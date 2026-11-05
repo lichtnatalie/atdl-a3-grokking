@@ -43,11 +43,11 @@ Runs per setting: 220 (11 sizes x 20 seeds); lambda_3 > 0: 138
   embedding lr 1e-2: 2 of 94 [(50, 2, 0.9), (50, 19, 0.943)]
   decoder lr 1e-5: 6 of 96 [(25, 2, 0.6), (35, 4, 0.857), (25, 7, 0.814), (30, 7, 0.886), (35, 8, 0.886), (35, 13, 0.9)]
 
-3. Movement of the normalised embeddings, failures (fit between steps 1,000 and 7,000)
-  released (emb 1e-3, dec 1e-4): n=66; last 1,000 steps vs 1,000 steps before the fit: net displacement x0.003, path length x0.18, embedding gradient norm x0.14
-  decoder lr 1e-3: n=26; last 1,000 steps vs 1,000 steps before the fit: net displacement x0.004, path length x0.11, embedding gradient norm x0.05
-  embedding lr 3e-3: n=46; last 1,000 steps vs 1,000 steps before the fit: net displacement x0.003, path length x0.17, embedding gradient norm x0.82
-  embedding lr 1e-2: n=44; last 1,000 steps vs 1,000 steps before the fit: net displacement x0.006, path length x0.16, embedding gradient norm x2.34
+3. Movement of the normalised embeddings, failures (fit between steps 1,000 and 7,000, at least 10 snapshots before the fit); windows between embedding snapshots
+  released (emb 1e-3, dec 1e-4): n=66; last 1,000 steps vs 1,000 steps before the fit: net displacement x0.003, path length x0.17, embedding gradient norm x0.13
+  decoder lr 1e-3: n=24; last 1,000 steps vs 1,000 steps before the fit: net displacement x0.006, path length x0.11, embedding gradient norm x0.05
+  embedding lr 3e-3: n=46; last 1,000 steps vs 1,000 steps before the fit: net displacement x0.002, path length x0.15, embedding gradient norm x0.79
+  embedding lr 1e-2: n=43; last 1,000 steps vs 1,000 steps before the fit: net displacement x0.008, path length x0.18, embedding gradient norm x2.40
 
 3b. When does the RQI of a failed run settle (stay within 0.05 of its final value)?
   released (emb 1e-3, dec 1e-4): 67 failures; settles -881 steps relative to the fit (median; IQR -1510 to +70); before the fit in 72%; training accuracy then 0.64

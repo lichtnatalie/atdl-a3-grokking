@@ -13,9 +13,18 @@ nested training sets, so they are not independent across training sizes. Setting
 are therefore compared with an exact sign test over the 20 seeds (seed = unit),
 as in A2. Everything else is descriptive.
 
-Usage: python experiments/analyse.py
+Movement windows. Embedding snapshots are saved at steps 99, 199, ..., and the
+per-step movement and gradient norms in 10-step blocks. Every movement window
+therefore runs between two snapshots, and its path length and mean gradient norm
+are taken over exactly the same steps. The pre-fit window ends at the last
+snapshot at or before the fit (at most 99 steps before it).
+
+Usage: python experiments/analyse.py [--results-root results]
+  With --results-root DIR (e.g. a fresh reproduction), the analysis reads DIR/<tag>/
+  and writes DIR/analysis/ and DIR/figures/ instead of results/analysis/ and figures/.
 """
 
+import argparse
 import csv
 import os
 
@@ -94,6 +103,14 @@ def per_seed_successes(rows):
 
 
 def main():
+    global RES, OUT, FIG
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--results-root", default=None,
+                    help="read <root>/<tag>/ and write <root>/analysis and <root>/figures")
+    a = ap.parse_args()
+    if a.results_root:
+        RES = os.path.abspath(a.results_root)
+        OUT, FIG = os.path.join(RES, "analysis"), os.path.join(RES, "figures")
     os.makedirs(OUT, exist_ok=True)
     os.makedirs(FIG, exist_ok=True)
     allrows = {t: load(t) for t in SETTINGS}
@@ -192,7 +209,8 @@ def main():
             + str([(int(r['n_train']), int(r['seed']), round(r['final_rqi'], 3)) for r in low]))
 
     # ---------------- 3. H1: movement after the fit ----------------
-    say("\n3. Movement of the normalised embeddings, failures (fit between steps 1,000 and 7,000)")
+    say("\n3. Movement of the normalised embeddings, failures (fit between steps 1,000 and "
+        "7,000, at least 10 snapshots before the fit); windows between embedding snapshots")
     tab = []
     for t in ["released", "dec_lr_1e-3", "emb_lr_3e-3", "emb_lr_1e-2"]:
         m = movement(t, [r for r in data[t] if not r["ok"]])
@@ -267,24 +285,42 @@ def med(x):
     return float(np.median(x)) if len(x) else np.nan
 
 
+def snapshot_before(d, t):
+    """Index of the last embedding snapshot at or before step t (-1 if none)."""
+    return int(np.searchsorted(d["E_step"], t, side="right")) - 1
+
+
+def window(d, j0, j1):
+    """Net displacement, path length and mean gradient norm of the normalised
+    embeddings between snapshots j0 < j1, i.e. over steps E_step[j0]+1 ... E_step[j1].
+
+    speed_norm[w] and grad_emb[w] cover steps 10w ... 10w+9, and E_step[j] = 100j + 99,
+    so these steps are exactly the blocks 10*j0 + 10 ... 10*j1 + 9."""
+    E, Es = d["E_norm"], d["E_step"]
+    a, b = (Es[j0] + 1) // 10, (Es[j1] + 1) // 10
+    assert a * 10 == Es[j0] + 1 and b * 10 == Es[j1] + 1, "snapshots not on block edges"
+    return (float(np.linalg.norm(E[j1] - E[j0])), float(d["speed_norm"][a:b].sum()),
+            float(d["grad_emb"][a:b].mean()))
+
+
 def movement(tag, rows, lo=1000, hi=7000):
-    """Late (last 1,000 steps) vs pre-fit (1,000 steps before the fit) ratios."""
+    """Last 1,000 steps vs the 1,000 steps ending at the last snapshot before the fit."""
     net, path, grad = [], [], []
     for r in rows:
         t90 = int(r["iter_train90"])
         if not (r["fit"] and lo <= t90 <= hi):
             continue
         d = trace(tag, r)
-        i, j = t90 // 10, t90 // 100
-        E = d["E_norm"]
-        pre_net = np.linalg.norm(E[j] - E[j - 10])
-        late_net = np.linalg.norm(E[-1] - E[-11])
-        pre_path, late_path = d["speed_norm"][i - 100:i].sum(), d["speed_norm"][-100:].sum()
-        pre_g, late_g = d["grad_emb"][i - 100:i].mean(), d["grad_emb"][-100:].mean()
-        if pre_net > 0:
-            net.append(late_net / pre_net)
-        path.append(late_path / pre_path)
-        grad.append(late_g / pre_g)
+        j = snapshot_before(d, t90)
+        if j < 10:  # no complete 1,000-step window before the fit
+            continue
+        pre = window(d, j - 10, j)
+        n = len(d["E_step"])
+        late = window(d, n - 11, n - 1)
+        if pre[0] > 0:
+            net.append(late[0] / pre[0])
+        path.append(late[1] / pre[1])
+        grad.append(late[2] / pre[2])
     return dict(net=net, path=path, grad=grad)
 
 
@@ -353,24 +389,25 @@ def fig_race(data):
 
 def fig_movement(data, tag="released"):
     """Failures: net displacement vs path length of the normalised embeddings,
-    per 500 steps, aligned to the fit."""
-    offs = np.arange(-1000, 5001, 100)
+    per 500 steps, aligned to the last snapshot at or before the fit. A point at
+    offset o is the 500-step window that starts o steps after that snapshot."""
+    ks = np.arange(-10, 51)  # window starts, in snapshots (100 steps) from the fit
+    offs = ks * 100
     net, path = [], []
     for r in data[tag]:
         if r["ok"] or not r["fit"] or not (1000 <= r["iter_train90"] <= 4500):
             continue
         d = trace(tag, r)
-        E, Es = d["E_norm"], d["E_step"]
-        sp, st = d["speed_norm"], d["step"]
-        t90 = r["iter_train90"]
+        j = snapshot_before(d, r["iter_train90"])
+        n = len(d["E_step"])
+        if j < 10:
+            continue
         a, b = [], []
-        for o in offs:
-            t = t90 + o
-            j = np.searchsorted(Es, t)
-            i = np.searchsorted(st, t)
-            if j + 5 < len(Es):
-                a.append(np.linalg.norm(E[j + 5] - E[j]))
-                b.append(sp[i:i + 50].sum())
+        for k in ks:
+            if 0 <= j + k and j + k + 5 < n:
+                w = window(d, j + k, j + k + 5)
+                a.append(w[0])
+                b.append(w[1])
             else:
                 a.append(np.nan)
                 b.append(np.nan)
