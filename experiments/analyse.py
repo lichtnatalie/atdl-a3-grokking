@@ -222,28 +222,38 @@ def main():
             f"the fit (median; IQR {np.percentile(rel, 25):+.0f} to {np.percentile(rel, 75):+.0f}); "
             f"before the fit in {np.mean(rel <= 0):.0%}; training accuracy then {np.median(acc):.2f}")
 
-    # ---------------- 4. Held-out (test) accuracy ----------------
-    say("\n4. Test accuracy on the held-out pairs (ideal = best possible given the training set)")
+    # ---------------- 4. Validation accuracy on the held-out pairs ----------------
+    # "ideal" = the authors' ideal accuracy (ideal_test_acc in train_add): what the
+    # paper's parallelogram argument allows from the training set. It is a benchmark,
+    # not a guaranteed ceiling (a model can get extra pairs right by chance).
+    # Accuracies are fractions of a few held-out pairs and are stored as float32, so
+    # comparisons use a small tolerance (e.g. a gain of exactly 1/5 is not > 0.2).
+    EPS = 1e-6
+    say("\n4. Validation accuracy on the held-out pairs, per run against its own ideal accuracy")
     for t, rows in data.items():
         for ok, lab in [(True, "successes"), (False, "failures")]:
             g = [r for r in rows if r["ok"] == ok]
             if not g:
                 continue
-            fin, ideal, late, small_test = [], [], [], []
+            fin, gap, late, small_test, both90 = [], [], [], [], 0
             for r in g:
                 d = trace(t, r)
-                te, st = d["acc_test"], d["step"]
+                te, st = d["acc_test"].astype(float), d["step"]
                 gain = te[-1] - te[np.searchsorted(st, 5000)]
                 fin.append(te[-1])
-                ideal.append(r["ideal_test_acc"])
+                gap.append(r["ideal_test_acc"] - te[-1])
                 late.append(gain)
-                if gain > 0.2:
+                if gain > 0.2 + EPS:
                     small_test.append(55 - int(r["n_train"]))
-            fin, ideal, late = map(np.array, (fin, ideal, late))
-            say(f"  {PLAIN[t]}, {lab} (n={len(g)}): final test accuracy median {np.median(fin):.2f} "
-                f"(ideal {np.median(ideal):.2f}); gain from step 5,000 to the end: median "
-                f"{np.median(late):+.2f}, max {late.max():+.2f}; runs gaining > 0.2: {len(small_test)}"
-                + (f" (test-set sizes {sorted(set(small_test))})" if small_test else ""))
+                both90 += (d["acc_train"].max() >= 0.9 - EPS) and (te.max() >= 0.9 - EPS)
+            fin, gap, late = map(np.array, (fin, gap, late))
+            say(f"  {PLAIN[t]}, {lab} (n={len(g)}): final validation accuracy median "
+                f"{np.median(fin):.2f}; per-run gap to own ideal accuracy median {np.median(gap):.2f}, "
+                f"runs at their ideal {int((gap <= EPS).sum())}, above it {int((gap < -EPS).sum())}; "
+                f"gain from step 5,000 to the end: median {np.median(late):+.2f}, max {late.max():+.2f}; "
+                f"runs gaining > 0.2: {len(small_test)}"
+                + (f" (held-out set sizes {sorted(set(small_test))})" if small_test else "")
+                + f"; runs reaching both 90% training and 90% validation accuracy: {both90}")
 
     open(os.path.join(OUT, "summary.txt"), "w").write("\n".join(lines) + "\n")
 
