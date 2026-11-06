@@ -10,24 +10,24 @@ NeurIPS 2022. [arXiv:2205.10343](https://arxiv.org/abs/2205.10343)
 
 Liu et al. explain their phase diagram as a *competition between representation
 learning and decoder overfitting* (Sec. 4.1), shown with phase diagrams over
-hyperparameters. This repository examines the competition **inside individual runs**
+hyperparameters. This repository examines the competition inside individual runs
 of the regression toy model (addition, p = 10) without weight decay:
 
 - **H1, no further improvement:** once the decoder has fit the training set, the
   representation (RQI) stops improving. Embedding movement and gradient norms are
-  recorded as diagnostics: in failed runs the embeddings keep moving back and forth,
+  recorded as diagnostics. In failed runs the embeddings keep moving back and forth,
   but without net progress, and the RQI usually stops improving before the fit.
 - **H2, the race:** among runs whose training set determines the linear
   representation (λ_3 > 0), the RQI at the moment the decoder fits the training set
   separates runs that reach RQI > 0.95 from runs that do not. This describes the
-  trajectories; most successful runs had already passed 0.95 by then.
+  trajectories, most successful runs had already passed 0.95 by then.
 - **H3, intervention:** a faster embedding learning rate helps, as a slower decoder does.
 
 **Definitions.**
-- "The decoder fits the training set" is the first step with **90% training
-  accuracy**, the paper's own threshold (Sec. 4.1). 100% is kept as a robustness check.
-- "The representation has formed" is the first step with **RQI > 0.95**.
-- Runs that never reach an event within 10^4 steps are treated as right-censored.
+- "The decoder fits the training set" is the first step with *90% training
+  accuracy*, the paper's own threshold (Sec. 4.1). 100% is kept as a robustness check.
+- "The representation has formed" is the first step with *RQI > 0.95*.
+- Runs that never reach an event within 10^4 steps are treated as right censored.
 
 ## Layout
 
@@ -35,17 +35,16 @@ of the regression toy model (addition, p = 10) without weight decay:
 src/logged_training.py       runs the authors' train_add unmodified and records gradient
                              norms, embedding movement, accuracy and RQI per step
 src/effective_theory.py      λ_3 of a training set (spectrum of H, eq. 8)
-experiments/check_exact.py   (1) the recording does not change training (exact equality);
+experiments/check_exact.py   (1) the recording does not change training (exact equality),
                              (2) the released setting reproduces earlier runs
-experiments/run_sweep.py     one configuration: 11 training set sizes x 20 seeds, resumable;
+experiments/run_sweep.py     one configuration: 11 training set sizes x 20 seeds, resumable:
                              refuses to resume a tag whose stored configuration differs
 experiments/run_all.sh       all configurations (OUT_ROOT=... for a separate output folder)
-experiments/analyse.py       every number and figure in the report (seed-level sign tests)
+experiments/analyse.py       all numbers and figures in the report (seed-level sign tests)
 results/analysis/            summary.txt (all quoted numbers) and per-setting tables
-figures/                     report figures (PDF and PNG)
-results/<tag>/runs.csv       one row per run; results/<tag>/traces/*.npz: curves every 10 steps
+figures/                     figures (PDF and PNG)
+results/<tag>/runs.csv       one row per run - results/<tag>/traces/*.npz: curves every 10 steps
 results/<tag>/config.json    the configuration of that sweep
-results/a2_reference/        reference runs of the released setting, used by check_exact.py
 third_party/grokking-squared/  authors' code, unmodified (MIT), pinned at 0229df9 (2022-11-25)
 ```
 
@@ -79,7 +78,7 @@ python experiments/analyse.py          # ~1 min: all numbers and figures from re
 ```
 
 **Results are included.** `results/` already contains all 1100 runs. Running
-`experiments/run_all.sh` as it is therefore only *resumes*: it finds every run done
+`experiments/run_all.sh` as it is therefore only resumes: it finds every run done
 and skips it.
 
 **Fresh reproduction.** To regenerate the experiments from scratch, write them to a
@@ -96,5 +95,5 @@ stops instead of mixing configurations.
 
 **Movement windows.** Embedding snapshots are stored every 100 steps (steps 99, 199,
 ...). Every movement window in `analyse.py` runs between two snapshots, and path
-length and gradient norms are taken over exactly the same steps; the pre-fit window
+length and gradient norms are taken over exactly the same steps, the pre-fit window
 ends at the last snapshot at or before the fit.
