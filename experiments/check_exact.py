@@ -4,8 +4,6 @@ Two checks before any experiment is trusted.
 1. The gradient recording does not change training: for a few (size, seed)
    pairs, train_add with and without the recording optimiser gives identical
    loss, accuracy, RQI and embedding trajectories (exact equality).
-2. The released setting reproduces the A2 runs (results/a2_reference/runs_baseline.csv,
-   copied from the A2 repository): same authors' iter_train, iter_rqi and final RQI.
 
 Usage: python experiments/check_exact.py [--n-a2 12]
 """
